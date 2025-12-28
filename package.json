@@ -1,0 +1,22 @@
+{
+    "name": "fahad-ai-avatar-2",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint"
+    },
+    "dependencies": {
+        "@google/generative-ai": "^0.21.0",
+        "@mediapipe/tasks-audio": "^0.10.22-rc.20250304",
+        "@react-three/drei": "^9.108.0",
+        "@react-three/fiber": "^8.16.8",
+        "next": "^14.2.3",
+        "react": "^18.3.1",
+        "react-dom": "^18.3.1",
+        "tavily": "^1.0.2",
+        "three": "^0.160.0"
+    }
+}
