@@ -204,13 +204,33 @@ function AvatarModel({ isListening, isSpeaking, audioData }) {
                     dict['mouthOpen'];
 
                 if (mouthOpenIndex !== undefined) {
-                    // Apply smooth mouth movement - subtle and natural
+                    // Drive mouthOpen by audio amplitude. Curve the intensity so
+                    // quiet sounds don't pop the mouth all the way open and loud
+                    // sounds reach a believable max.
+                    const curved = Math.pow(intensity, 0.7);
                     influences[mouthOpenIndex] = THREE.MathUtils.lerp(
                         influences[mouthOpenIndex] || 0,
-                        Math.min(intensity * 0.9, 1.0),  // Reduced to 0.9 for very subtle, natural movement
-                        0.6  // Faster response for more dynamic movement
+                        Math.min(curved * 1.15, 1.0),
+                        0.7
                     );
                     animationApplied = true;
+                }
+
+                // Mix a touch of mouthSmile that fluctuates with audio so the
+                // mouth shape varies between rounded ("o") and wider ("ee")
+                // instead of just opening and closing on the same axis.
+                const mouthSmileIndex =
+                    dict['mouthSmile'] ??
+                    dict['viseme_E'] ??
+                    dict['viseme_I'];
+                if (mouthSmileIndex !== undefined) {
+                    const wobble = 0.5 + 0.5 * Math.sin(state.clock.elapsedTime * 7);
+                    const target = intensity * 0.35 * wobble;
+                    influences[mouthSmileIndex] = THREE.MathUtils.lerp(
+                        influences[mouthSmileIndex] || 0,
+                        target,
+                        0.5
+                    );
                 }
             }
 
