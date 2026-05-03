@@ -27,7 +27,7 @@ export async function POST(request) {
             : persona.getCoreInstructions();
 
         const model = genAI.getGenerativeModel({
-            model: 'gemini-2.0-flash-exp',
+            model: 'gemini-2.0-flash',
             systemInstruction
         });
 

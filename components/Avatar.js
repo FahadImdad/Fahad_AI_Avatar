@@ -51,8 +51,8 @@ class AvatarErrorBoundary extends Component {
 
 function AvatarModel({ isListening, isSpeaking, audioData }) {
     const group = useRef();
-    // ReadyPlayerMe avatar with visemes enabled
-    const avatarUrl = 'https://models.readyplayer.me/693afeff78f65986ccb00932.glb?morphTargets=Oculus+Visemes';
+    // Local ReadyPlayerMe avatar with visemes (served from public/Asset/)
+    const avatarUrl = '/Asset/avatar.glb';
     const { scene } = useGLTF(avatarUrl);
     const [bones, setBones] = useState({});
 
