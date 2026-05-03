@@ -147,7 +147,12 @@ export default function Home() {
                 if (currentResult.isFinal) {
                     transcriptAccumulatorRef.current += ' ' + transcript;
                     resetSilenceTimer();
-                } else {
+                } else if (transcript && transcript.trim().length > 0 &&
+                           transcriptAccumulatorRef.current.trim().length === 0) {
+                    // Only reset on interim if we don't already have a final
+                    // transcript queued — prevents background noise interim
+                    // events from indefinitely pushing back the silence
+                    // window after the user has stopped talking.
                     resetSilenceTimer();
                 }
             };
@@ -204,7 +209,7 @@ export default function Home() {
     const resetSilenceTimer = () => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-        // Wait 1.5 seconds of silence before processing
+        // Wait 1 second of silence before processing
         silenceTimerRef.current = setTimeout(async () => {
             const fullTranscript = transcriptAccumulatorRef.current.trim();
             if (fullTranscript.length > 0) {
@@ -214,7 +219,7 @@ export default function Home() {
             } else {
                 console.log('No transcript to process after silence timeout');
             }
-        }, 1500);
+        }, 1000);
     };
 
     const processConversation = async (text) => {

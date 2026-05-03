@@ -119,9 +119,16 @@ function AvatarModel({ isListening, isSpeaking, audioData }) {
                     });
                 });
 
-                if (foundVisemes.length > 0) {
-                    console.log('🎯 VISEMES FOUND:', foundVisemes);
-                    // Use head/face mesh with visemes (prefer Wolf3D_Head for ReadyPlayerMe)
+                // Accept the mesh for lipsync if it has either Oculus visemes
+                // (preferred) OR a generic mouthOpen morph as a fallback.
+                const hasMouthMorph =
+                    dict['mouthOpen'] !== undefined ||
+                    dict['MouthOpen'] !== undefined ||
+                    dict['mouth_open'] !== undefined;
+
+                if (foundVisemes.length > 0 || hasMouthMorph) {
+                    if (foundVisemes.length > 0) console.log('🎯 VISEMES FOUND:', foundVisemes);
+                    if (hasMouthMorph) console.log('🎯 mouthOpen morph found on', child.name);
                     if (!visemeMesh || child.name.includes('Head') || child.name.includes('Face')) {
                         visemeMesh = child;
                         console.log('✅ USING MESH FOR LIP SYNC:', child.name);
