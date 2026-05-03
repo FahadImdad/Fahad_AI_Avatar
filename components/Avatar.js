@@ -51,8 +51,9 @@ class AvatarErrorBoundary extends Component {
 
 function AvatarModel({ isListening, isSpeaking, audioData }) {
     const group = useRef();
-    // Local avatar with mouthOpen morph for lipsync (served from public/Asset/)
-    const avatarUrl = '/Asset/fahad_2.glb';
+    // ReadyPlayerMe avatar proxied through /api/avatar so the visemes query
+    // param works (server-side fetch, no browser CORS).
+    const avatarUrl = '/api/avatar';
     const { scene } = useGLTF(avatarUrl);
     const [bones, setBones] = useState({});
 
