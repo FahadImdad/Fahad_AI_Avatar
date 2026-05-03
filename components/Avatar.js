@@ -1,9 +1,47 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { Suspense, Component, useRef, useEffect, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useGLTF, OrbitControls, Environment } from '@react-three/drei';
 import * as THREE from 'three';
+
+class AvatarErrorBoundary extends Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, info) {
+        console.error('Avatar render failed:', error, info);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return (
+                <div
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'rgba(255,255,255,0.6)',
+                        fontSize: '14px',
+                        textAlign: 'center',
+                        padding: '20px',
+                    }}
+                >
+                    Avatar failed to load. The conversation will still work.
+                </div>
+            );
+        }
+        return this.props.children;
+    }
+}
 
 function AvatarModel({ isListening, isSpeaking, audioData }) {
     const group = useRef();
@@ -230,30 +268,40 @@ function AvatarModel({ isListening, isSpeaking, audioData }) {
 export default function Avatar({ isListening, isSpeaking, audioData }) {
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-            <Canvas
-                camera={{ position: [0, 1.3, 2], fov: 45 }}
-                style={{ background: 'transparent' }}
-            >
-                <ambientLight intensity={0.5} />
-                <directionalLight position={[5, 5, 5]} intensity={1} />
-                <directionalLight position={[-5, 5, -5]} intensity={0.5} />
-                <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={0.5} />
+            <AvatarErrorBoundary>
+                <Canvas
+                    camera={{ position: [0, 1.3, 2], fov: 45 }}
+                    style={{ background: 'transparent' }}
+                    onCreated={({ gl }) => {
+                        gl.domElement.addEventListener('webglcontextlost', (e) => {
+                            e.preventDefault();
+                            console.warn('WebGL context lost');
+                        });
+                    }}
+                >
+                    <ambientLight intensity={0.5} />
+                    <directionalLight position={[5, 5, 5]} intensity={1} />
+                    <directionalLight position={[-5, 5, -5]} intensity={0.5} />
+                    <spotLight position={[0, 10, 0]} angle={0.3} penumbra={1} intensity={0.5} />
 
-                <AvatarModel
-                    isListening={isListening}
-                    isSpeaking={isSpeaking}
-                    audioData={audioData}
-                />
+                    <Suspense fallback={null}>
+                        <AvatarModel
+                            isListening={isListening}
+                            isSpeaking={isSpeaking}
+                            audioData={audioData}
+                        />
+                        <Environment preset="city" />
+                    </Suspense>
 
-                <Environment preset="city" />
-                <OrbitControls
-                    enableZoom={true}
-                    enablePan={false}
-                    minDistance={1.5}
-                    maxDistance={4}
-                    target={[0, 1.3, 0]}
-                />
-            </Canvas>
+                    <OrbitControls
+                        enableZoom={true}
+                        enablePan={false}
+                        minDistance={1.5}
+                        maxDistance={4}
+                        target={[0, 1.3, 0]}
+                    />
+                </Canvas>
+            </AvatarErrorBoundary>
 
             {/* Status indicator - Minimal */}
             {(isListening || isSpeaking) && (

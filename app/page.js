@@ -36,28 +36,39 @@ export default function Home() {
     // Initialize audio context and cleanup on unmount
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-            analyserRef.current = audioContextRef.current.createAnalyser();
-            analyserRef.current.fftSize = 256;
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) {
+                try {
+                    audioContextRef.current = new AudioCtx();
+                    analyserRef.current = audioContextRef.current.createAnalyser();
+                    analyserRef.current.fftSize = 256;
+                } catch (e) {
+                    console.warn('AudioContext unavailable:', e);
+                }
+            } else {
+                console.warn('AudioContext API not supported in this browser');
+            }
         }
 
         return () => {
             // Cleanup all resources
             if (audioContextRef.current) {
-                audioContextRef.current.close();
+                try { audioContextRef.current.close(); } catch (e) { /* ignore */ }
             }
             if (silenceTimerRef.current) {
                 clearTimeout(silenceTimerRef.current);
             }
             if (recognitionRef.current) {
-                recognitionRef.current.stop();
+                try { recognitionRef.current.stop(); } catch (e) { /* ignore */ }
                 recognitionRef.current = null;
             }
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
                 mediaStreamRef.current = null;
             }
-            window.speechSynthesis.cancel();
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
         };
     }, []);
 
@@ -118,7 +129,9 @@ export default function Home() {
                 // If AI is speaking, interrupt it immediately when user starts talking
                 if (isSpeakingRef.current) {
                     console.log('🛑 User started speaking - interrupting AI');
-                    window.speechSynthesis.cancel(); // Stop any ongoing speech
+                    if (typeof window !== 'undefined' && window.speechSynthesis) {
+                        window.speechSynthesis.cancel(); // Stop any ongoing speech
+                    }
                     setIsSpeaking(false);
                     isSpeakingRef.current = false;
                     setAudioData(0);
@@ -369,6 +382,10 @@ export default function Home() {
         } catch (error) {
             // Fallback to Web Speech API
             console.log('→ Using Web Speech API fallback');
+            if (typeof window === 'undefined' || !window.speechSynthesis || typeof SpeechSynthesisUtterance === 'undefined') {
+                console.warn('SpeechSynthesis API not available');
+                return;
+            }
             const utterance = new SpeechSynthesisUtterance(text);
 
             let animationId;
@@ -432,7 +449,9 @@ export default function Home() {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
             mediaStreamRef.current = null;
         }
-        window.speechSynthesis.cancel();
+        if (typeof window !== 'undefined' && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+        }
     };
 
     return (
