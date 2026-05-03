@@ -51,9 +51,10 @@ class AvatarErrorBoundary extends Component {
 
 function AvatarModel({ isListening, isSpeaking, audioData }) {
     const group = useRef();
-    // ReadyPlayerMe avatar proxied through /api/avatar so the visemes query
-    // param works (server-side fetch, no browser CORS).
-    const avatarUrl = '/api/avatar';
+    // Local avatar with mouthOpen morph for lipsync (served from public/Asset/).
+    // Original ReadyPlayerMe URL is no longer reachable (proxy fetch returns 502),
+    // and the larger avatar.glb has no morph targets at all.
+    const avatarUrl = '/Asset/fahad_2.glb';
     const { scene } = useGLTF(avatarUrl);
     const [bones, setBones] = useState({});
 
