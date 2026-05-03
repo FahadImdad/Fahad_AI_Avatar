@@ -51,8 +51,8 @@ class AvatarErrorBoundary extends Component {
 
 function AvatarModel({ isListening, isSpeaking, audioData }) {
     const group = useRef();
-    // Local ReadyPlayerMe avatar with visemes (served from public/Asset/)
-    const avatarUrl = '/Asset/avatar.glb';
+    // Local avatar with mouthOpen morph for lipsync (served from public/Asset/)
+    const avatarUrl = '/Asset/fahad_2.glb';
     const { scene } = useGLTF(avatarUrl);
     const [bones, setBones] = useState({});
 
