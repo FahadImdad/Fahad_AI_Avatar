@@ -21,21 +21,27 @@ class AvatarErrorBoundary extends Component {
 
     render() {
         if (this.state.hasError) {
+            const msg = this.state.error?.message || String(this.state.error || 'unknown error');
             return (
                 <div
                     style={{
                         position: 'absolute',
                         inset: 0,
                         display: 'flex',
+                        flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: 'rgba(255,255,255,0.6)',
                         fontSize: '14px',
                         textAlign: 'center',
                         padding: '20px',
+                        gap: '8px',
                     }}
                 >
-                    Avatar failed to load. The conversation will still work.
+                    <div>Avatar failed to load. The conversation will still work.</div>
+                    <div style={{ fontSize: '11px', opacity: 0.5, maxWidth: '600px', wordBreak: 'break-word' }}>
+                        {msg}
+                    </div>
                 </div>
             );
         }
