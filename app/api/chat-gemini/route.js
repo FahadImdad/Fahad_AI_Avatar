@@ -20,40 +20,45 @@ export async function POST(request) {
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // Use Gemini 2.0 Flash (fastest) or Gemini 1.5 Pro (best quality)
-        // Adjust system instruction based on whether image is provided
         const systemInstruction = image
             ? persona.getVisionInstructions()
             : persona.getCoreInstructions();
 
-        const model = genAI.getGenerativeModel({
-            model: 'gemini-2.5-flash',
-            systemInstruction
-        });
-
         const parts = [{ text: message }];
-
-        // Add image if provided
         if (image) {
-            console.log('✅ Adding image to Gemini request (length:', image.length, ')');
             parts.push({
-                inlineData: {
-                    mimeType: 'image/jpeg',
-                    data: image
-                }
+                inlineData: { mimeType: 'image/jpeg', data: image }
             });
-        } else {
-            console.log('ℹ️ No image provided - text-only mode');
         }
 
-        console.log('📤 Sending to Gemini with', parts.length, 'parts (text + image =', parts.length, ')');
-        const result = await model.generateContent(parts);
-        const response = await result.response;
-        const aiResponse = response.text();
+        // Try a list of models in order — Google has retired or restricted
+        // several variants for new keys, so fall back through the current GA
+        // family until one responds.
+        const candidates = [
+            'gemini-flash-latest',
+            'gemini-2.5-flash',
+            'gemini-2.5-pro',
+            'gemini-pro-latest',
+        ];
 
-        console.log('Gemini response:', aiResponse);
+        const failures = [];
+        for (const modelName of candidates) {
+            try {
+                const model = genAI.getGenerativeModel({ model: modelName, systemInstruction });
+                const result = await model.generateContent(parts);
+                const aiResponse = (await result.response).text();
+                console.log(`Gemini OK via ${modelName}`);
+                return NextResponse.json({ response: aiResponse, model: modelName });
+            } catch (e) {
+                console.warn(`Model ${modelName} failed: ${e.message}`);
+                failures.push(`${modelName}: ${e.message}`);
+            }
+        }
 
-        return NextResponse.json({ response: aiResponse });
+        return NextResponse.json(
+            { error: `All Gemini models failed. ${failures.join(' | ')}` },
+            { status: 502 }
+        );
     } catch (error) {
         console.error('Gemini API error:', error);
         return NextResponse.json(
